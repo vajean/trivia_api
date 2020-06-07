@@ -66,15 +66,17 @@ One note before you delve into your tasks: for each endpoint you are expected to
 8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
 9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
 
-REVIEW_COMMENT
+
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
+Bellow is the documentation for each endpoint
 
 Endpoints
 GET '/categories'
-GET ...
-POST ...
-DELETE ...
+GET '/questions'
+GET '/categories/int:category_id/questions'
+POST '/questions'
+POST '/quizzes'
+DELETE '/questions/int:question_id'
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
@@ -87,6 +89,93 @@ GET '/categories'
 '5' : "Entertainment",
 '6' : "Sports"}
 
+GET '/questions'
+- Fetch a dictionary of questions paginated in questions per page, with keys:
+    categories - list of categories,
+    questions - list of question dictionary:
+        answer - correct answer,
+        category - category of the question,
+        difficulty - question difficulty (1-5),
+        id - unique question id,
+        question - question string
+    total_questions - number of questions in db
+- Request arguments: page number as ?page=1,2,3
+- Return example:
+{
+  "categories": [
+    "Art",
+    "Entertainment",
+    "Geography",
+    "History",
+    "Science",
+    "Sports"
+  ],
+  "questions": [
+    {
+      "answer": "Maya Angelou",
+      "category": 4,
+      "difficulty": 2,
+      "id": 5,
+      "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+    },
+    {
+      "answer": "Edward Scissorhands",
+      "category": 5,
+      "difficulty": 3,
+      "id": 6,
+      "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
+    }
+  ],
+  "success": true,
+  "total_questions: 2
+}
+
+GET '/categories/int:category_id/questions'
+- Fetch a dictionary of questions within a category ID paginated in questions per page, with keys:
+    categories - list of categories,
+    questions - list of question dictionary:
+        answer - correct answer,
+        category - category of the question,
+        difficulty - question difficulty (1-5),
+        id - unique question id,
+        question - question string
+    total_questions - number of questions in db
+- Request arguments: category ID in the URL as int '/categories/int:category_id/questions'
+- Returns: see GET '/questions' for formatting, but only questions within the requested category
+
+POST '/questions'
+- add or search question:
+    if search_term key present in request - search using the search term and return a dictionary with questions matching the search
+    else a new Question object is created with question, answer, difficulty and category keys from the request and added to the database
+- request arguments -  search_term, or question, answer, difficulty, category - keys of JSON dictionary in request
+- returns:
+    if search:
+        see GET '/questions' for formatting, but only questions matching the search term
+    if add question:
+        returns GET '/questions' for formatting, with the new question added
+
+POST '/quizzes'
+- return one random question from a category or from all categories if no category is requested,
+    does not repeat questions based on the request argument "previous_questions"
+        answer - correct answer,
+        category - category of the question,
+        difficulty - question difficulty (1-5),
+        id - unique question id,
+        question - question string
+- request arguments: previous_question, quiz_category - keys of JSON dictionary in request
+- return example:
+    {
+      "answer": "Edward Scissorhands",
+      "category": 5,
+      "difficulty": 3,
+      "id": 6,
+      "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
+    }
+
+DELETE '/questions/int:question_id'
+- delete the requested question by ID from the DB
+- request parameter" question_id in the URL
+- return GET '/questions'
 ```
 
 
@@ -97,4 +186,8 @@ dropdb trivia_test
 createdb trivia_test
 psql trivia_test < trivia.psql
 python test_flaskr.py
+
+or
+
+dropdb trivia_test && createdb trivia_test && psql trivia_test <trivia.psql && python test_flaskr.py
 ```
