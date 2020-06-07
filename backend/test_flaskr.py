@@ -103,7 +103,7 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 405)
-        self.assertEqual(data['success'], True)
+        self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'method not allowed')
 
     def test_search_with_results(self):
@@ -124,6 +124,46 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['total_questions'], 0)
         self.assertEqual(len(data['questions']), 0)
 
+    def test_show_questions_by_category(self):
+        res = self.client().get('/categories/1/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(len(data['questions']))
+        self.assertTrue(data['total_questions'])
+
+    def test_show_questions_by_category_error(self):
+        res = self.client().get('/categories/10/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
+
+    def test_quiz_ok(self):
+        res = self.client().post('/quizzes', json={'previous_questions': [],
+                                                   'quiz_category': {
+                                                       "id": 0,
+                                                       "type": "click"
+                                                   }})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
+
+    def test_quiz_error(self):
+        res = self.client().post('/quizzes', json={'previous_questions': [],
+                                                   'quiz_category': {
+                                                       "id": 9,
+                                                       "type": "click"
+                                                   }})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'method not allowed')
 # Make the tests conveniently executable
 if __name__ == "__main__":
     unittest.main()
