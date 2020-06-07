@@ -91,7 +91,7 @@ def create_app(test_config=None):
     # on a search term
 
     @app.route('/questions', methods=['POST'])
-    def create_or_search_book():
+    def create_or_search_questions():
         body = request.get_json()
         new_question = body.get('question', None)
         new_answer = body.get('answer', None)
@@ -113,7 +113,7 @@ def create_app(test_config=None):
 
             else:
                 question = Question(question=new_question, answer=new_answer,
-                                    difficulty=new_difficulty, category=new_category)
+                                    difficulty=new_difficulty, category=str(int(new_category) + 1))
                 question.insert()
 
                 selection = Question.query.order_by(Question.id).all()
@@ -128,25 +128,24 @@ def create_app(test_config=None):
         except:
             abort(405)
 
-    # TODO:
-    '''
-    Create a POST endpoint to . 
-    It should return any questions for whom the search term 
-    is a substring of the question. 
-  
-    TEST: Search by any phrase. The questions list will update to include 
-    only question that include that string within their question. 
-    Try using the word "title" to start. 
-    '''
+    # GET endpoint to get questions based on category
 
-    # TODO:
-    '''
-    Create a GET endpoint to get questions based on category. 
-  
-    TEST: In the "List" tab / main screen, clicking on one of the 
-    categories in the left column will cause only questions of that 
-    category to be shown. 
-    '''
+    @app.route('/categories/<int:category>/questions', methods=['GET'])
+    def get_questions_by_categories(category):
+        selection = Question.query.filter(Question.category == category + 1).all()
+        questions = paginate_questions(request, selection)
+        categories_selection = Category.query.order_by(Category.type).all()
+        categories = [category.type for category in categories_selection]
+
+        if len(questions) == 0:
+            abort(404)
+
+        return jsonify({
+            'success': True,
+            'questions': questions,
+            'total_questions': len(selection),
+            'categories': categories
+        })
 
     # TODO:
     '''
@@ -159,6 +158,47 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not. 
     '''
+
+    @app.route('/quizzes', methods=['POST'])
+    def get_quiz():
+        body = request.get_json()
+        previous_questions = body.get('previous_questions', [])
+        quiz_category = body.get('quiz_category', None)
+
+        if quiz_category['id'] == 0:
+
+            questions = Question.query.all()
+            print(len(questions))
+            remaining_questions = []
+            for question in questions:
+                if question.id not in previous_questions:
+                    remaining_questions.append(question)
+            # Shuffle the questions
+            random.shuffle(remaining_questions)
+
+            return jsonify({
+                'success': True,
+                'question': remaining_questions.pop().format()
+            })
+
+        else:
+            try:
+
+                questions = Question.query.filter(Question.category == int(quiz_category['id']) + 1).all()
+                print(len(questions))
+                remaining_questions = []
+                for question in questions:
+                    if question.id not in previous_questions:
+                        remaining_questions.append(question)
+                # Shuffle the questions
+                random.shuffle(remaining_questions)
+
+                return jsonify({
+                    'success': True,
+                    'question': remaining_questions.pop().format()
+                })
+            except:
+                abort(405)
 
     # TODO:
     '''
@@ -188,6 +228,6 @@ def create_app(test_config=None):
             "success": False,
             "error": 405,
             "message": "method not allowed"
-        }), 422
+        }), 405
 
     return app
